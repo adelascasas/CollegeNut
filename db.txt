@@ -1,0 +1,75 @@
+colleges:
+CREATE TABLE colleges( 
+    name varchar(255), 
+    admitRate float,
+    instateTuition int, 
+    outstateTuition int,
+    score int,
+    institutionType varchar(20),
+    medianGradDebt int,
+    state varchar(2),
+    location varchar(2),
+    size int,
+    satMath int,
+    satErwb int,
+    ACT int,
+    completeRate float,
+    PRIMARY KEY(name)
+);
+
+majors:
+CREATE TABLE majors(
+    id int AUTO_INCREMENT,
+    college varchar(255),
+    major varchar(255),
+    PRIMARY KEY(id)
+);
+
+student: 
+CREATE TABLE students(
+    username varchar(255) ,
+    password varchar(255),
+    salt varchar(255),
+    satMath int,
+    satErwb int, 
+    actComposite int, 
+    numAPPassed int, 
+    GPA float,
+    PRIMARY KEY(username)
+);
+
+favorites:
+CREATE TABLE favorites(
+    id int AUTO_INCREMENT,
+    username varchar(255),
+    collegename varchar(255),
+    PRIMARY KEY(id)
+);
+
+SELECT
+    c.name, 
+    c.admitRate,
+    c.instateTuition, 
+    c.outstateTuition,
+    c.score,
+    c.institutionType,
+    c.medianGradDebt,
+    c.state,
+    c.location,
+    c.size,
+    c.satMath,
+    c.satErwb,
+    c.ACT,
+    c.completeRate colleges
+FROM favorites f
+WHERE f.collegename = 'American University' AND f.username = 'American University'
+INNER JOIN colleges c ON c.name = f.collegename;
+
+SELECT name, admitRate, instateTuition, outstateTuition, score, institutionType, medianGradDebt, state, location, size, satMath, satErwb, ACT, completeRate
+FROM favorites, colleges
+WHERE collegename = name 
+AND username = 'adelascasas';
+
+
+
+
