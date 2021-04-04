@@ -74,9 +74,21 @@ function getRanks(colleges) {
             resolve(colleges);
         })();
     }).catch((err) => {
-        console.log(err);
-        resolve(colleges);
+        throw err;
     })
+}
+
+function setTestScore(setter, value, college){
+    if(value.includes('average')){
+        college[setter] = parseInt(value.slice(0,3));
+    }
+    else if(value.includes('range')){
+        const ranges = value.slice(0,7).split('-');
+        college[setter] = Math.round((parseInt(ranges[0]) + parseInt(ranges[1]))/2);
+    }
+    else{
+        college[setter] = null;
+    }
 }
 
 /**
@@ -89,7 +101,7 @@ function scrapeCollegeData(colleges){
     //array of promises
     const promises = [];
     // url that will be appended to when sending request
-    let url = 'https://www.CollegeData.com/college/';
+    let url = 'https://waf.collegedata.com/college-search/';
     //parse through each college object in map
     for (const college of colleges){
         // append new promise to promises array
@@ -111,78 +123,55 @@ function scrapeCollegeData(colleges){
                 //obtain html from url
                 const $ = cheerio.load(response.data);
                 //parse html to obtain designated data
-                let cardItems = $('div#profile-overview.tab-pane.fade.show.active').find('div.card.card--white.card--sm dd').toArray();
-                let satMath = $(cardItems[6]).text().slice(1, -1);
-                let satErwb = $(cardItems[7]).text().slice(1, -1);
-                let Act = $(cardItems[8]).text();
-                let CostOfAttend = $(cardItems[9]).text();
-                let header = $('div.col-lg-8 p').toArray();
-                let state = $(header[0]).text().split(',')[1].trimLeft();
-                let completionRate = parseFloat((parseFloat($(cardItems[30]).text())/100).toFixed(3));
-                //modify values in variables based on obtained value from html
-                //ex) if SAT erwb is not reported set college object satErwb to null
-                if(satErwb.includes('reported')){
-                    college[1].setSatErwb(null);
+                const collegeProfile = JSON.parse($('script#__NEXT_DATA__').get()[0].children[0].data).props.pageProps.profile;
+                const state = collegeProfile.address.state;
+                let satMath = null;
+                let satErwb = null;
+                let Act = null;
+                let inStateTuition = null;
+                let outStateTuition = null;
+                if(college[0] === "Missouri University of Science and Technology" || college[0] === "Temple University"){
+                    satMath = collegeProfile.bodyContent[0].data.children[5].data.value[0];
+                    satErwb = collegeProfile.bodyContent[0].data.children[6].data.value[0];
+                    Act = collegeProfile.bodyContent[0].data.children[7].data.value[0];
                 }
-                //if sat erwb contains average , assign the average by turning string into int
-                else if(satErwb.includes('average')){
-                    college[1].setSatErwb(parseInt(satErwb.trim().split(/\s/)[0]));
-                //if sat erwb doesnt contain average find midpoint of given range, endpoints
-                }else{
-                    let endPoints = satErwb.trim().split(/\s|-/);
-                    college[1].setSatErwb((parseInt(endPoints[1]) + parseInt(endPoints[0]))/2);
-                }
-                if(satMath.includes('reported')){
-                    college[1].setSatMath(null);
-                }
-                else if(satMath.includes('average')){
-                    college[1].setSatMath(parseInt(satMath.trim().split(/\s/)[0]));
-                }else{
-                    let endPoints = satMath.trim().split(/\s|-/);
-                    college[1].setSatMath((parseInt(endPoints[1]) + parseInt(endPoints[0]))/2);
-                }
-                if(Act.includes('reported')){
-                    college[1].setACT(null);
-                }
-                else if(Act.includes('average')){
-                    college[1].setACT(parseInt(Act.trim().split(/\s/)[0]));
-                }else{
-                    let endPoints = Act.trim().split(/\s|-/);
-                    college[1].setACT((parseInt(endPoints[1]) + parseInt(endPoints[0]))/2);
-                }
-                if(CostOfAttend.includes('reported')){
-                    college[1].setInstateTuition(null);
-                    college[1].setOutstateTuition(null);
-                }
-                //check if costOFAttendance is based on public uni
-                else if(CostOfAttend.includes('state')){
-                    let costs = $(cardItems[9]).text().split(/\s|O/);
-                    college[1].setInstateTuition(parseInt(costs[1].replace(/\$|,/g,'')));
-                    college[1].setOutstateTuition(parseInt(costs[3].replace(/\$|,/g,'')));
-                }
-                //if costOfAttendance is based on private uni
                 else{
-                    college[1].setInstateTuition(parseInt(CostOfAttend.replace(/\$|,/g,'')));
-                    college[1].setOutstateTuition(null);
+                    satMath = collegeProfile.bodyContent[0].data.children[7].data.value[0];
+                    satErwb = collegeProfile.bodyContent[0].data.children[8].data.value[0];
+                    Act = collegeProfile.bodyContent[0].data.children[9].data.value[0];
                 }
-                //assign remaining values to properties to college object
-
+                let completionRate = collegeProfile.bodyContent[4].data.children[3].data.value[0];
+                if(completionRate === "Not reported"){
+                    completionRate = null;
+                }
+                else{
+                    completionRate = (parseFloat(completionRate.slice(0,-1))/100).toFixed(3)
+                }
+                if(collegeProfile.bodyContent[1].data.children[1].data.value[0].includes('$')){
+                    inStateTuition = collegeProfile.bodyContent[1].data.children[1].data.value[0].split('$')[1].replace(/,/g, '');
+                }
+                if(collegeProfile.bodyContent[1].data.children[1].data.value.length == 2){
+                    outStateTuition = collegeProfile.bodyContent[1].data.children[1].data.value[1].split('$')[1].replace(/,/g, '');
+                }
+                setTestScore("satMath",satMath,college[1]);
+                setTestScore("satErwb",satErwb,college[1]);
+                setTestScore("ACT",Act,college[1]);
                 college[1].setState(state);
                 college[1].setCompleteRate(completionRate);
-                axios.get(newUrl+"/?tab=profile-academics-tab").then(response => {
+                college[1].setInstateTuition(inStateTuition);
+                college[1].setOutstateTuition(outStateTuition);
+                axios.get(newUrl+"/academics").then(response => {
                     //obtain html from url
                     const $ = cheerio.load(response.data);
                     //parse html to obtain majors
-                    //split('\n').filter(item => item.trim() != '')
-                    let majors = $($('.card-body .row ').toArray()[0]).text().split('\n').filter(item => item.trim() != '');
+                    const dataProfile = JSON.parse($('script#__NEXT_DATA__').get()[0].children[0].data).props.pageProps.profile;
+                    const majors = dataProfile.bodyContent[0].data.children[0].data.data;
                     college[1].setMajors(majors);
-                    //resolve or return college object
                     resolve(college);         
                 }).catch((err)=> {
                     resolve(college);
                 })
             }).catch((err) => {
-                //if there is error sending request with url , still return unmodified student object
                 resolve(college);
             })
         })

@@ -28,7 +28,7 @@ con.connect((err) => {
     //iterate through each college object
     while (!collegeObject.done) {
         //insert college object into colleges table
-        //collegeInsert(collegeObject.value);
+        collegeInsert(collegeObject.value);
         //if college object has majors property set
         if(collegeObject.value.getMajors()){
             //for each college major insert into collegemajors table
@@ -344,8 +344,6 @@ const getCollegenames = () => {
 
 
 
-module.exports.collegeInsert = collegeInsert;
-module.exports.majorInsert = majorInsert;
 module.exports.studentInsert = studentInsert;
 module.exports.getStudentAccount = getStudentAccount;
 module.exports.updateAccount = updateAccount;
