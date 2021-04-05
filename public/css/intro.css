@@ -1,16 +1,29 @@
 body, html {
-    background: #007b5e;
-    color: #eee;
+  margin: 0;
+  padding: 0;
+  color: #eee;
+  background: #282828;
 }
 
-.center-div {
-  position: absolute;
-  margin: auto;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  width: auto;
-  height: 300px;
+.background {
+position: absolute;
+display: block;
+top: 0;
+left: 0;
+z-index: -1;
 }
- 
+
+
+
+.center-div {
+position: absolute;
+margin: auto;
+top: 0;
+right: 0;
+bottom: 0;
+left: 0;
+width: auto;
+height: 300px;
+}
+
+

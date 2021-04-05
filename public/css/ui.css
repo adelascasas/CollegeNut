@@ -13,7 +13,8 @@ section .section-title {
     text-transform: uppercase;
 }
 #tabs{
-    color: #eee;
+	color: #eee;
+	opacity: 0;
 }
 #tabs h6.section-title{
     color: #eee;

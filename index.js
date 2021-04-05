@@ -286,4 +286,4 @@ function verifyToken(req,res,next) {
 }
   
 
-app.listen(3000,'127.0.0.1');
+app.listen(process.env.PORT,'localhost');
